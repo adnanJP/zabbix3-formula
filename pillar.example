@@ -1,0 +1,22 @@
+zabbix3:
+  server:
+    host: XXX.XXX.XXX.XXX
+  mysql:
+    database_path: salt://zabbix3/files/zabbix.sql.gz
+    dbname: zabbix
+    dbhost: XXX.XXX.XXX.XXX
+    dbuser: zabbix
+    dbpass: zabbix
+    user: root
+    pass: toto
+    grants:
+      server_zabbix:
+        user: zabbix
+        password: zabbix
+        grants: all privileges
+        host: XXX.XXX.XXX.XXX
+      server_web:
+        user: zabbix
+        password: zabbix
+        grants: all privileges
+        host: XXX.XXX.XXX.XXX
