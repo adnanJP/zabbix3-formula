@@ -2,9 +2,12 @@
 
 zabbix3_database_present:
   mysql_database.present:
-    - name: {{ salt['pillar.get']('zabbix3.mysql.dbname', 'zabbix') }}
+    - name: zabbix
     - connection_user: {{ zabbix3.mysql.user }}
+{% if zabbix3.mysql.pass is defined %}
     - connection_pass: {{ zabbix3.mysql.pass }}
+{% endif %}
+
 
 {% for srv, config in salt['pillar.get']('zabbix3:mysql:grants', {}).iteritems() %}
 zabbix3_mysql_user_{{ srv }}:
@@ -13,16 +16,21 @@ zabbix3_mysql_user_{{ srv }}:
     - host: {{ config.host }}
     - password: {{ config.password }}
     - connection_user: {{ zabbix3.mysql.user }}
+{% if zabbix3.mysql.pass is defined %}
     - connection_pass: {{ zabbix3.mysql.pass }}
+{% endif %}
+
 
 zabbix_mysql_grants_{{ srv }}:
   mysql_grants.present:
     - grant: {{ config.grants }}
-    - database: '{{ salt['pillar.get']('zabbix3.mysql.dbname', 'zabbix') }}.*'
+    - database: 'zabbix.*'
     - user: {{ config.user }}
     - host: {{ config.host }}
     - connection_user: {{ zabbix3.mysql.user }}
+{% if zabbix3.mysql.pass is defined %}
     - connection_pass: {{ zabbix3.mysql.pass }}
+{% endif %}
     - require:
       - mysql_user: zabbix3_mysql_user_{{ srv }}
 
@@ -38,7 +46,7 @@ zabbix3_mysql_filedb:
 zabbix3_create_database:
   cmd.run:
     - name: |
-        zcat /tmp/zabbix.sql.gz | mysql -u{{ zabbix3.mysql.user }} -p{{ zabbix3.mysql.pass }} zabbix
+        zcat /tmp/zabbix.sql.gz | mysql -u{{ zabbix3.mysql.user }} {% if zabbix3.mysql.pass is defined %}-p{{ zabbix3.mysql.pass }}{% endif %} zabbix
         rm /tmp/zabbix.sql.gz
     - onchanges:
       - file: zabbix3_mysql_filedb
