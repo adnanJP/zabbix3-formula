@@ -165,6 +165,42 @@ def host_exists(host,
     log.debug('JP_ZABBIX : host_exists : END')
     return len(result) > 0
 
+def host_get(host,
+             **connection_args):
+    log.debug('JP_ZABBIX : host_get : START')
+    zapi = _get_zapi(**connection_args)
+    result = []
+    try:
+        result = zapi.host.get(filter={"host":[host]})
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : host_get : END')
+    return result
+
+def host_enable(host,
+                **kwargs):
+    log.debug('JP_ZABBIX : host_enable : START')
+    zapi = _get_zapi()
+    if host_exists(host):
+        result = 'Host Already exists !!'
+        hostid = host_get(host)[0]['hostid']
+        try:
+            log.debug('try update status of ' + host + ' to ')
+            log.debug(kwargs)
+            result = zapi.host.update(hostid=hostid, status=kwargs['status'])
+            interfaces = zapi.hostinterface.get()
+            for interf in interfaces:
+                if interf['hostid'] == hostid:
+                    zapi.hostinterface.update(interfaceid=interf['interfaceid'],
+                                              ip=kwargs['ip'])
+        except Exception as e:
+            log.error(str(e))
+            pass
+        log.debug(result)
+    log.debug('JP_ZABBIX : host_enable : END')
+
 def host_delete(**connection_args):
     log.debug('JP_ZABBIX : host_delete : START')
     zapi = _get_zapi(**connection_args)
@@ -172,33 +208,48 @@ def host_delete(**connection_args):
     log.debug('JP_ZABBIX : host_delete : END')
     return
 
-def host_update(**connection_args):
-    log.debug('JP_ZABBIX : host_update : START')
+##############
+## TEMPLATE ##
+##############
+def template_get(host,
+                 **connection_args):
+    log.debug('JP_ZABBIX : template_get : START')
+    zapi = _get_zapi(**connection_args)
+    result = []
+    try:
+        result = zapi.template.get(filter={"host":[host]})
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : template_get : END')
+    return result
+
+def template_massadd(templatename,
+                     hostnames,
+                     **connection_args):
+    log.debug('JP_ZABBIX : template_massadd : START')
     zapi = _get_zapi(**connection_args)
 
-    log.debug('JP_ZABBIX : host_update : END')
-    return
+    result = []
+    templateid = []
+    hostsid = []
 
-def addhost():
-    log.debug('JP_ZABBIX.ADDHOST()')
-    if __grains__['kernel'] == 'Linux':
-        zapi = ZabbixAPI("http://192.168.107.112/zabbix")
-        zapi.login("admin", "zabbix")
-        log.debug(__grains__['id'])
-        log.debug(__grains__['ip4_interfaces']['eth1'][0])
-        result = 'ERROR'
-        try:
-            zapi.host.create(host=__grains__['id'],
-                             groups=[{'groupid':2}],
-                             interfaces=[{"type": 1,
-                                          "main": 1,
-                                          "useip": 1,
-                                          "ip": __grains__['ip4_interfaces']['eth1'][0],
-                                          "dns": "",
-                                          "port": "10050"}])
-        except Exception as e:
-            log.error(str(e))
-            pass
+    templateid.append({
+        'templateid': template_get(templatename)[0]['templateid']
+    })
+    for host in hostnames:
+        hostsid.append({'hostid': host_get(host)[0]['hostid']})
+
+    try:
+        result = zapi.template.massadd(templates=templateid, hosts=hostsid)
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : template_massadd : END')
+    return result
+
 
 def webscenario():
     log.debug('JP_ZABBIX.WEBSCENARIO()')
