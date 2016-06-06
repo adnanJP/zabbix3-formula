@@ -250,7 +250,9 @@ def template_massadd(templatename,
     log.debug('JP_ZABBIX : template_massadd : END')
     return result
 
-
+############
+## Autres ##
+############
 def webscenario():
     log.debug('JP_ZABBIX.WEBSCENARIO()')
     if 'webserver' in __grains__['roles']:

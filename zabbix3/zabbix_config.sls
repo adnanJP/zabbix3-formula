@@ -2,6 +2,8 @@
 
 {% set linux_ips = salt.saltutil.runner('mine.get', tgt='kernel:Linux', fun='network.ip_addrs',  tgt_type='grain') %}
 
+{% set windows_ips = salt.saltutil.runner('mine.get', tgt='kernel:Windows', fun='network.ip_addrs',  tgt_type='grain') %}
+
 
 {% set web_ips = salt.saltutil.runner('mine.get',tgt='roles:zabbix_web', fun='network.ip_addrs',  tgt_type='grain') %}
 {% set server_ips = salt.saltutil.runner('mine.get',tgt='roles:zabbix_server', fun='network.ip_addrs',  tgt_type='grain') %}
@@ -69,12 +71,27 @@ zabbix3_config_host_enable_Zabbix server:
 
 {% endfor %}
 
+##############
+## TEMPLATE ##
+##############
+
+## Template OS Linux
 zabbix_config_template_link_Template OS Linux:
   module.run:
     - name: jp_zabbix.template_massadd
     - templatename: "Template OS Linux"
     - hostnames:
 {% for id in linux_ips %}
+        - {{ id }}
+{% endfor %}
+
+## Template OS Windows
+zabbix_config_template_link_Template OS Windows:
+  module.run:
+    - name: jp_zabbix.template_massadd
+    - templatename: "Template OS Windows"
+    - hostnames:
+{% for id in windows_ips %}
         - {{ id }}
 {% endfor %}
 
@@ -93,4 +110,3 @@ zabbix3_config_user_create_{{ user }}:
         - usrgrpid: {{ param.usrgrpid }}
 
 {% endfor %}
-
