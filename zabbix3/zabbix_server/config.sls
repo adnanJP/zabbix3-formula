@@ -5,3 +5,5 @@ zabbix_server_mysql_conf:
     - template: jinja
     - listen_in:
       - service: zabbix_server_service
+    - require:
+      - pkg: zabbix3-install-server-mysql
