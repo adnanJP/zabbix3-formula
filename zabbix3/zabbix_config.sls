@@ -85,15 +85,6 @@ zabbix_config_template_link_Template OS Linux:
         - {{ id }}
 {% endfor %}
 
-## Template OS Windows
-zabbix_config_template_link_Template OS Windows:
-  module.run:
-    - name: jp_zabbix.template_massadd
-    - templatename: "Template OS Windows"
-    - hostnames:
-{% for id in windows_ips %}
-        - {{ id }}
-{% endfor %}
 
 #####################
 ## add/update user ##
@@ -109,4 +100,64 @@ zabbix3_config_user_create_{{ user }}:
     - usrgrps:
         - usrgrpid: {{ param.usrgrpid }}
 
+{% if param.sendto is defined %}
+zabbix3_config_user_addmedia_{{ user }}:
+  module.run:
+    - name: jp_zabbix.user_addmedia
+    - alias: {{ user }}
+    - kwargs:
+        medias:
+          mediatypeid: "1"
+          sendto: "{{ param.sendto }}"
+          active: "0"
+          severity: "63"
+          period: "1-7,00:00-24:00"
+    - require:
+      - module: zabbix3_config_user_create_{{ user }}
+{% endif %}
+
 {% endfor %}
+
+
+###########
+## MEDIA ##
+###########
+zabbix3_config_media_disable_jabber:
+  module.run:
+    - name: jp_zabbix.mediatype_update
+    - kwargs:
+        mediatypeid: 2
+        status: 1
+
+zabbix3_config_media_disable_sms:
+  module.run:
+    - name: jp_zabbix.mediatype_update
+    - kwargs:
+        mediatypeid: 3
+        status: 1
+
+
+zabbix3_config_media_mail:
+  module.run:
+    - name: jp_zabbix.mediatype_update
+    - kwargs:
+        mediatypeid: 1
+        smtp_port: 587
+        smtp_server: auth.smtp.1and1.fr
+        smtp_email: send1@johnpaul.com
+        smtp_helo: johnpaul.com
+        smtp_authentication: 1
+        smtp_username: send1@johnpaul.com
+        username: send1@johnpaul.com
+        passwd: 1234567
+
+############
+## ACTION ##
+############
+
+zabbix3_config_action_enable:
+  module.run:
+    - name: jp_zabbix.action_update
+    - kwargs:
+        actionid: 3
+        status: 0

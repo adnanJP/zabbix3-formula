@@ -23,8 +23,13 @@ def _get_zapi(connection_user=None,
         connection_password = __pillar__['zabbix3']['configuration']['connection_password']
         connection_url = __pillar__['zabbix3']['configuration']['connection_url']
 
-    zapi = ZabbixAPI(connection_url)
-    zapi.login(connection_user, connection_password)
+    zapi = None
+    try:
+        zapi = ZabbixAPI(connection_url)
+        zapi.login(connection_user, connection_password)
+    except Exception as e:
+        log.error(str(e))
+        pass
 
     log.debug("JP_ZABBIX: _get_zapi : START")
     return zapi
@@ -81,15 +86,48 @@ def user_update(alias,
         except Exception as e:
             log.warning(str(e))
             pass
+
     log.debug('JP_ZABBIX : user_update : END')
     return
 
-def user_delete(**connection_args):
-    log.debug('JP_ZABBIX : user_delete : START')
-    zapi = _get_zapi(**connection_args)
+def user_addmedia(alias,
+                  **kwargs):
+    log.info('JP_ZABBIX : user_addmedia : START')
+    zapi = _get_zapi()
+    result = "ERROR"
+    if user_exists(alias) and ('medias' in kwargs):
+        try:
+            doit = True
+            medias = user_getmedia(alias)
+            for m in medias:
+                if m['sendto'] == kwargs['medias']['sendto']:
+                    doit = False
+            if doit:
+                log.debug('Addmedia to user: ' + alias)
+                userid = user_get(alias)[0]['userid']
+                log.debug("USERID: "+userid)
+                result = zapi.user.addmedia(users={'userid': userid},
+                                            **kwargs)
+        except Exception as e:
+            log.warning(str(e))
+            pass
+    log.info('JP_ZABBIX : user_addmedia : END')
 
-    log.debug('JP_ZABBIX : user_delete : END')
-    return
+def user_getmedia(alias,
+                  **kwargs):
+    log.info('JP_ZABBIX : user_getmedia : START')
+    zapi = _get_zapi()
+    result = []
+    if user_exists(alias):
+        try:
+            log.debug('Addmedia to user: ' + alias)
+            userid = user_get(alias)[0]['userid']
+            result = zapi.usermedia.get(usersids=userid)
+        except Exception as e:
+            log.warning(str(e))
+            pass
+    log.info('JP_ZABBIX : user_getmedia : END')
+    return result
 
 def user_exists(user,
                 **connection_args):
@@ -147,7 +185,29 @@ def host_create(host,
             log.error(str(e))
             pass
         log.debug(result)
+    else:
+        host_update(host, groups, interfaces, **connection_args)
     log.debug('JP_ZABBIX : host_create : END')
+
+def host_update(host,
+                groups,
+                interfaces,
+                **connection_args):
+    log.debug('JP_ZABBIX : host_update : START')
+    zapi = _get_zapi(**connection_args)
+    if host_exists(host, **connection_args):
+        try:
+            log.debug('try updating:')
+            log.debug(host)
+            hostid = host_get(host, **connection_args)[0]['hostid']
+            zapi.host.update(hostid=hostid,
+                             groups=groups,
+                             name=host,
+                             interfaces=interfaces)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : host_update : END')
 
 def host_exists(host,
                 **connection_args):
@@ -239,16 +299,50 @@ def template_massadd(templatename,
         'templateid': template_get(templatename)[0]['templateid']
     })
     for host in hostnames:
-        hostsid.append({'hostid': host_get(host)[0]['hostid']})
-
+        if host_exists(host):
+            hostsid.append({'hostid': host_get(host)[0]['hostid']})
     try:
-        result = zapi.template.massadd(templates=templateid, hosts=hostsid)
+        if len(hostsid) > 0:
+            result = zapi.template.massadd(templates=templateid, hosts=hostsid)
         log.debug(result)
     except Exception as e:
         log.error(str(e))
         pass
     log.debug('JP_ZABBIX : template_massadd : END')
-    return result
+#    return result
+
+###########
+## MEDIA ##
+###########
+def mediatype_update(**kwargs):
+    log.debug('JP_ZABBIX : media_update : START')
+    zapi = _get_zapi()
+    result = []
+    try:
+        result = zapi.mediatype.update(**kwargs)
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : media_update : END')
+#    return result
+
+
+############
+## ACTION ##
+############
+def action_update(**kwargs):
+    log.debug('JP_ZABBIX : media_update : START')
+    zapi = _get_zapi()
+    result = []
+    try:
+        result = zapi.action.update(**kwargs)
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : media_update : END')
+#    return result
 
 ############
 ## Autres ##
