@@ -42,6 +42,7 @@ def user_create(alias,
                 psswd,
                 usrgrps,
                 type,
+                theme="default",
                 **connection_args):
     log.debug('JP_ZABBIX : user_create : START')
     zapi = _get_zapi(**connection_args)
@@ -52,6 +53,7 @@ def user_create(alias,
             result = zapi.user.create(alias=alias,
                                       passwd=psswd,
                                       usrgrps=usrgrps,
+                                      theme=theme,
                                       type=type)
         except Exception as e:
             log.error(str(e))
@@ -61,6 +63,7 @@ def user_create(alias,
                     psswd,
                     usrgrps,
                     type,
+                    theme=theme,
                     **connection_args)
     log.debug('JP_ZABBIX : user_create : END')
     return
@@ -69,6 +72,7 @@ def user_update(alias,
                 psswd,
                 usrgrps,
                 type,
+                theme="default",
                 force = False,
                 **connection_args):
     log.debug('JP_ZABBIX : user_update : START')
@@ -82,7 +86,8 @@ def user_update(alias,
             result = zapi.user.update(userid=userid,
                                       passwd=psswd,
                                       usrgrps=usrgrps,
-                                      type=type)
+                                      type=type,
+                                      theme=theme)
         except Exception as e:
             log.warning(str(e))
             pass
@@ -343,6 +348,148 @@ def action_update(**kwargs):
         pass
     log.debug('JP_ZABBIX : media_update : END')
 #    return result
+
+##########
+## ITEM ##
+##########
+def item_create(host,
+                **kwargs):
+    log.debug('JP_ZABBIX : item_creat : START')
+    zapi = _get_zapi()
+    hostget = host_get(host)
+    if len(hostget) > 0 and len(item_get(host, **kwargs)) == 0:
+        try:
+            zapi.item.create(hostid=hostget[0]['hostid'],
+                             **kwargs)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : item_create : END')
+#    return result
+
+def item_get(host,
+             **kwargs):
+    log.debug('JP_ZABBIX : item_get : START')
+    zapi = _get_zapi()
+    result = []
+    try:
+        hostid = host_get(host)[0]['hostid']
+        result = zapi.item.get(hostids=hostid,
+                               search={"key_":kwargs['key_']})
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : item_get : END')
+    return result
+
+#################
+## APPLICATION ##
+#################
+def application_create(host,
+                       name,
+                       **kwargs):
+    log.debug('JP_ZABBIX : application_create : START')
+    zapi = _get_zapi()
+    hostget = host_get(host)
+    result = None
+    if len(hostget) > 0 and len(application_get(host, name)) == 0:
+        try:
+            result = zapi.application.create(hostid=hostget[0]['hostid'],
+                                    name=name,
+                                    **kwargs)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : application_create : END')
+    return result
+
+def application_get(host,
+                    name,
+                    **kwargs):
+    log.debug('JP_ZABBIX : application_get : START')
+    zapi = _get_zapi()
+    result = []
+    try:
+        hostid = host_get(host)[0]['hostid']
+        result = zapi.application.get(hostids=hostid,
+                                      search={"name":name})
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : application_get : END')
+    return result
+
+##############
+## HTTPTEST ##
+##############
+def httptest_create(host,
+                    application,
+                    name,
+                    **kwargs):
+    log.debug('JP_ZABBIX : httptest_create : START')
+    zapi = _get_zapi()
+    hostget = host_get(host)
+    if len(hostget) > 0:
+        appid = application_get(host,
+                                application)
+        if len(appid) == 0:
+            appid[0] = application_create(host, application)
+        try:
+            httptestid = httptest_get(host, name)
+            if len(httptestid) == 0:
+                zapi.httptest.create(hostid=hostget[0]['hostid'],
+                                     name=name,
+                                     applicationid=appid[0]['applicationid'],
+                                     **kwargs)
+            else:
+                zapi.httptest.update(httptestid=httptestid[0]['httptestid'],
+                                     name=name,
+                                     applicationid=appid[0]['applicationid'],
+                                     **kwargs)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : httptest_create : END')
+
+def httptest_update(host,
+                    application,
+                    name,
+                    **kwargs):
+    log.debug('JP_ZABBIX : httptest_update : START')
+    zapi = _get_zapi()
+    hostget = host_get(host)
+    if len(hostget) > 0:
+        try:
+            appid = application_get(host,
+                                    name)
+            httptestid = httptest_get(host, name)[0]['httptestid']
+            zapi.httptest.update(httptestid=httptestid,
+                                 applicationid=appid[0]['applicationid'],
+                                 **kwargs)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : httptest_update : END')
+
+def httptest_get(host,
+                 name,
+                 **kwargs):
+    log.debug('JP_ZABBIX : httptest_get : START')
+    zapi = _get_zapi()
+    result = []
+    try:
+        hostid = host_get(host)[0]['hostid']
+        result = zapi.httptest.get(hostids=hostid,
+                                   search={"name":name})
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : httptest_get : END')
+    return result
+
 
 ############
 ## Autres ##

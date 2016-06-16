@@ -97,6 +97,9 @@ zabbix3_config_user_create_{{ user }}:
     - alias: {{ user }}
     - psswd: {{ param.psswd }}
     - type: {{ param.type }}
+    {% if param.theme is defined %}
+    - theme: {{ param.theme }}
+    {% endif %}
     - usrgrps:
         - usrgrpid: {{ param.usrgrpid }}
 
@@ -161,3 +164,79 @@ zabbix3_config_action_enable:
     - kwargs:
         actionid: 3
         status: 0
+
+###################
+## DATAWARE JOBS ##
+###################
+{% set environments = ['dev', 'test', 'prod'] %}
+{% for env in  environments %}
+
+{% set dataware_ips = salt.saltutil.runner('mine.get',
+tgt='G@environment:'+env+' and G@roles:dataware',
+fun='network.ip_addrs',
+tgt_type='compound') %}
+
+{% for dataware in dataware_ips %}
+{% for job in salt['pillar.get']('zabbix3:configuration:dataware_jobs') %}
+
+zabbix3_config_item_dataware_jobs_{{ env }}_{{ job }}:
+  module.run:
+    - name: jp_zabbix.item_create
+    - host: {{ dataware }}
+    - kwargs:
+        delay: 90
+        key_: dataware_{{ env }}_{{ job }}
+        name: dataware_{{ env }}_{{ job }}
+        type: 2 # Zabbix trapper
+        value_type: 4 # text
+        trapper_hosts: {{ dataware_ips[dataware][0] }}
+
+zabbix3_config_item_dataware_jobs_{{ env }}_{{ job }}_time:
+  module.run:
+    - name: jp_zabbix.item_create
+    - host: {{ dataware }}
+    - kwargs:
+        delay: 90
+        key_: dataware_{{ env }}_{{ job }}_time
+        name: dataware_{{ env }}_{{ job }}_time
+        type: 2 # Zabbix trapper
+        value_type: 3 # integer
+        data_type: 0 # decimal
+        trapper_hosts: {{ dataware_ips[dataware][0] }}
+
+{% endfor %}
+{% endfor  %}
+
+{% endfor  %}
+
+{% set webserver_ips = salt.saltutil.runner('mine.get',
+tgt='roles:webserver',
+fun='get_web_url',
+tgt_type='grain') %}
+
+{% for webserver in webserver_ips %}
+zabbix3_config_{{ webserver }}_application_create_webapplications:
+  module.run:
+    - name: jp_zabbix.application_create
+    - host: {{ webserver }}
+    - m_name: WebApplications
+
+
+{% for url in webserver_ips[webserver].split('\n') %}
+
+zabbix3_config_{{ webserver }}_httptest_create_{{ url }}:
+  module.run:
+    - name: jp_zabbix.httptest_create
+    - host: {{ webserver }}
+    - application: WebApplications
+    - m_name: {{ url }}
+    - kwargs:
+        steps:
+          - name: "INDEX"
+            url: "http://{{ url }}"
+            status_code: 200
+            no: 1
+
+{% endfor %}
+
+{% endfor %}
