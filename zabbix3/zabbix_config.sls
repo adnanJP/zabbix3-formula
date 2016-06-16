@@ -4,6 +4,15 @@
 
 {% set windows_ips = salt.saltutil.runner('mine.get', tgt='kernel:Windows', fun='network.ip_addrs',  tgt_type='grain') %}
 
+{% set webserver_url_ips = salt.saltutil.runner('mine.get',
+tgt='roles:webserver',
+fun='get_web_url',
+tgt_type='grain') %}
+
+{% set webserver_ips = salt.saltutil.runner('mine.get',
+tgt='roles:webserver',
+fun='network.ip_addrs',
+tgt_type='grain') %}
 
 {% set web_ips = salt.saltutil.runner('mine.get',tgt='roles:zabbix_web', fun='network.ip_addrs',  tgt_type='grain') %}
 {% set server_ips = salt.saltutil.runner('mine.get',tgt='roles:zabbix_server', fun='network.ip_addrs',  tgt_type='grain') %}
@@ -84,6 +93,27 @@ zabbix_config_template_link_Template OS Linux:
 {% for id in linux_ips %}
         - {{ id }}
 {% endfor %}
+
+## Template App HTTP Service
+zabbix_config_template_link_Template App HTTP Service:
+  module.run:
+    - name: jp_zabbix.template_massadd
+    - templatename: "Template App HTTP Service"
+    - hostnames:
+{% for id in webserver_ips %}
+        - {{ id }}
+{% endfor %}
+
+## Template App Apache Web Server zapache
+zabbix_config_template_link_Template App Apache Web Server zapache:
+  module.run:
+    - name: jp_zabbix.template_massadd
+    - templatename: "Template App Apache Web Server zapache"
+    - hostnames:
+{% for id in webserver_ips %}
+        - {{ id }}
+{% endfor %}
+
 
 
 #####################
@@ -209,12 +239,10 @@ zabbix3_config_item_dataware_jobs_{{ env }}_{{ job }}_time:
 
 {% endfor  %}
 
-{% set webserver_ips = salt.saltutil.runner('mine.get',
-tgt='roles:webserver',
-fun='get_web_url',
-tgt_type='grain') %}
-
-{% for webserver in webserver_ips %}
+###############################################
+## Creat Application, Web scenario & Trigger ##
+###############################################
+{% for webserver in webserver_url_ips %}
 zabbix3_config_{{ webserver }}_application_create_webapplications:
   module.run:
     - name: jp_zabbix.application_create
@@ -222,7 +250,7 @@ zabbix3_config_{{ webserver }}_application_create_webapplications:
     - m_name: WebApplications
 
 
-{% for url in webserver_ips[webserver].split('\n') %}
+{% for url in webserver_url_ips[webserver].split('\n') %}
 
 zabbix3_config_{{ webserver }}_httptest_create_{{ url }}:
   module.run:
@@ -237,6 +265,16 @@ zabbix3_config_{{ webserver }}_httptest_create_{{ url }}:
             status_code: 200
             no: 1
 
+zabbix3_config_{{ webserver }}_trigger_create_{{ url }}:
+  module.run:
+    - name: jp_zabbix.trigger_create
+    - host: {{ webserver }}
+    - description: "{{ url }} Status not 200"
+    - expression: '{{"{"}}{{ webserver }}:web.test.rspcode[{{ url }},INDEX].last(){{"}"}}<>200'
+    - dependencies:
+        - "HTTP service is down on {HOST.NAME}"
+    - kwargs:
+        priority: 3
 {% endfor %}
 
 {% endfor %}

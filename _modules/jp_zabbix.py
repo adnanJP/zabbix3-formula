@@ -28,7 +28,7 @@ def _get_zapi(connection_user=None,
         zapi = ZabbixAPI(connection_url)
         zapi.login(connection_user, connection_password)
     except Exception as e:
-        log.error(str(e))
+        log.warning(str(e))
         pass
 
     log.debug("JP_ZABBIX: _get_zapi : START")
@@ -46,6 +46,8 @@ def user_create(alias,
                 **connection_args):
     log.debug('JP_ZABBIX : user_create : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     if not user_exists(alias, **connection_args):
         result = 'User Already exists !!'
         try:
@@ -77,6 +79,8 @@ def user_update(alias,
                 **connection_args):
     log.debug('JP_ZABBIX : user_update : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     result = "ERROR"
     if force or user_exists(alias, **connection_args):
         try:
@@ -99,6 +103,8 @@ def user_addmedia(alias,
                   **kwargs):
     log.info('JP_ZABBIX : user_addmedia : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = "ERROR"
     if user_exists(alias) and ('medias' in kwargs):
         try:
@@ -122,6 +128,8 @@ def user_getmedia(alias,
                   **kwargs):
     log.info('JP_ZABBIX : user_getmedia : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = []
     if user_exists(alias):
         try:
@@ -138,13 +146,15 @@ def user_exists(user,
                 **connection_args):
     log.debug('JP_ZABBIX : user_exists : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     result = []
     try:
         log.debug('Verify if ' + user + " already exists")
         result = zapi.user.get(filter={"alias":[user]})
         log.debug(result)
     except Exception as e:
-        log.error(str(e))
+        log.warning(str(e))
         pass
     log.debug("User " + user + " exists?: " + str(len(result) > 0))
     log.debug('JP_ZABBIX : user_exists : END')
@@ -154,13 +164,15 @@ def user_get(user,
              **connection_args):
     log.debug('JP_ZABBIX : user_get : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     result = []
     try:
         log.debug('Verify if ' + user + " already exists")
         result = zapi.user.get(filter={"alias":[user]})
         log.debug(result)
     except Exception as e:
-        log.error(str(e))
+        log.warning(str(e))
         pass
     log.debug('JP_ZABBIX : user_get : END')
     return result
@@ -176,6 +188,8 @@ def host_create(host,
                 **connection_args):
     log.debug('JP_ZABBIX : host_create : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     if not host_exists(host, **connection_args):
         result = 'Host Already exists !!'
         try:
@@ -200,6 +214,8 @@ def host_update(host,
                 **connection_args):
     log.debug('JP_ZABBIX : host_update : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     if host_exists(host, **connection_args):
         try:
             log.debug('try updating:')
@@ -207,8 +223,8 @@ def host_update(host,
             hostid = host_get(host, **connection_args)[0]['hostid']
             zapi.host.update(hostid=hostid,
                              groups=groups,
-                             name=host,
-                             interfaces=interfaces)
+                             name=host) #,
+#                             interfaces=interfaces)
         except Exception as e:
             log.error(str(e))
             pass
@@ -218,6 +234,8 @@ def host_exists(host,
                 **connection_args):
     log.debug('JP_ZABBIX : host_exists : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     result = []
     try:
         log.debug('Verify if ' + host + " already exists")
@@ -234,6 +252,8 @@ def host_get(host,
              **connection_args):
     log.debug('JP_ZABBIX : host_get : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     result = []
     try:
         result = zapi.host.get(filter={"host":[host]})
@@ -248,6 +268,8 @@ def host_enable(host,
                 **kwargs):
     log.debug('JP_ZABBIX : host_enable : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     if host_exists(host):
         result = 'Host Already exists !!'
         hostid = host_get(host)[0]['hostid']
@@ -269,6 +291,8 @@ def host_enable(host,
 def host_delete(**connection_args):
     log.debug('JP_ZABBIX : host_delete : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
 
     log.debug('JP_ZABBIX : host_delete : END')
     return
@@ -280,6 +304,8 @@ def template_get(host,
                  **connection_args):
     log.debug('JP_ZABBIX : template_get : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
     result = []
     try:
         result = zapi.template.get(filter={"host":[host]})
@@ -295,6 +321,8 @@ def template_massadd(templatename,
                      **connection_args):
     log.debug('JP_ZABBIX : template_massadd : START')
     zapi = _get_zapi(**connection_args)
+    if not zapi:
+        return None
 
     result = []
     templateid = []
@@ -322,6 +350,8 @@ def template_massadd(templatename,
 def mediatype_update(**kwargs):
     log.debug('JP_ZABBIX : media_update : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = []
     try:
         result = zapi.mediatype.update(**kwargs)
@@ -339,6 +369,8 @@ def mediatype_update(**kwargs):
 def action_update(**kwargs):
     log.debug('JP_ZABBIX : media_update : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = []
     try:
         result = zapi.action.update(**kwargs)
@@ -354,8 +386,10 @@ def action_update(**kwargs):
 ##########
 def item_create(host,
                 **kwargs):
-    log.debug('JP_ZABBIX : item_creat : START')
+    log.debug('JP_ZABBIX : item_create : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     hostget = host_get(host)
     if len(hostget) > 0 and len(item_get(host, **kwargs)) == 0:
         try:
@@ -371,6 +405,8 @@ def item_get(host,
              **kwargs):
     log.debug('JP_ZABBIX : item_get : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = []
     try:
         hostid = host_get(host)[0]['hostid']
@@ -391,6 +427,8 @@ def application_create(host,
                        **kwargs):
     log.debug('JP_ZABBIX : application_create : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     hostget = host_get(host)
     result = None
     if len(hostget) > 0 and len(application_get(host, name)) == 0:
@@ -409,6 +447,8 @@ def application_get(host,
                     **kwargs):
     log.debug('JP_ZABBIX : application_get : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = []
     try:
         hostid = host_get(host)[0]['hostid']
@@ -430,6 +470,8 @@ def httptest_create(host,
                     **kwargs):
     log.debug('JP_ZABBIX : httptest_create : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     hostget = host_get(host)
     if len(hostget) > 0:
         appid = application_get(host,
@@ -444,10 +486,10 @@ def httptest_create(host,
                                      applicationid=appid[0]['applicationid'],
                                      **kwargs)
             else:
-                zapi.httptest.update(httptestid=httptestid[0]['httptestid'],
-                                     name=name,
-                                     applicationid=appid[0]['applicationid'],
-                                     **kwargs)
+                httptest_update(host=host,
+                                application=application,
+                                name=name,
+                                **kwargs)
         except Exception as e:
             log.error(str(e))
             pass
@@ -459,17 +501,19 @@ def httptest_update(host,
                     **kwargs):
     log.debug('JP_ZABBIX : httptest_update : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     hostget = host_get(host)
     if len(hostget) > 0:
         try:
             appid = application_get(host,
-                                    name)
+                                    application)
             httptestid = httptest_get(host, name)[0]['httptestid']
             zapi.httptest.update(httptestid=httptestid,
                                  applicationid=appid[0]['applicationid'],
                                  **kwargs)
         except Exception as e:
-            log.error(str(e))
+            log.warning(str(e))
             pass
     log.debug('JP_ZABBIX : httptest_update : END')
 
@@ -478,6 +522,8 @@ def httptest_get(host,
                  **kwargs):
     log.debug('JP_ZABBIX : httptest_get : START')
     zapi = _get_zapi()
+    if not zapi:
+        return None
     result = []
     try:
         hostid = host_get(host)[0]['hostid']
@@ -490,33 +536,103 @@ def httptest_get(host,
     log.debug('JP_ZABBIX : httptest_get : END')
     return result
 
+#############
+## TRIGGER ##
+#############
 
-############
-## Autres ##
-############
-def webscenario():
-    log.debug('JP_ZABBIX.WEBSCENARIO()')
-    if 'webserver' in __grains__['roles']:
-        zapi = ZabbixAPI("http://192.168.107.112/zabbix")
-        zapi.login("admin", "zabbix")
+def trigger_create(host,
+                   description,
+                   expression,
+                   dependencies=None,
+                   **kwargs):
+    log.debug('JP_ZABBIX : trigger_create : START')
+    zapi = _get_zapi()
+    if not zapi:
+        return None
+    hostget = host_get(host)
+    result = None
+    if len(hostget) > 0:
+        try:
+            if len(trigger_get(host, description)) == 0:
+                if not dependencies:
+                    result = zapi.trigger.create(hostids=hostget[0]['hostid'],
+                                                 description=description,
+                                                 expression=expression,
+                                                 **kwargs)
+                else:
+                    dep = []
+                    for d in dependencies:
+                        dep.append(
+                            {'triggerid': trigger_get(host,
+                                                      d)[0]['triggerid']}
+                        )
+                        result = zapi.trigger.create(hostids=hostget[0]['hostid'],
+                                                     description=description,
+                                                     expression=expression,
+                                                     dependencies=dep,
+                                                     **kwargs)
+            else:
+                trigger_update(host,
+                               description,
+                               expression,
+                               dependencies,
+                               **kwargs)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : trigger_create : END')
+    return result
 
-        urls = __salt__['cmd.shell']("grep -ri '^[^#]*servername' /etc/apache2/sites-available/ | cut -d':' -f2 | awk '{ sub(/.*(S|s)erverName[[:blank:]]*/, \"\"); print }' | sort", out='json')
-        log.debug("RESULTAT URLS = ")
-        log.debug(json.dumps(urls))
-        for u in urls.replace(' ', '').split('\n'):
-            try:
-                zapi.httptest.create(name=u,
-                                     hostid=zapi.host.get(
-                                         filter={'host':__grains__['id']}
-                                     )[0]['hostid'],
-                                     steps=[{'name':"home page",
-                                             'url':'http://'+u,
-                                             'status_codes':200,
-                                             'no':1}])
-            except Exception as e:
-                log.error(str(e))
-                pass
-        return urls.replace(' ', '').split('\n')
-        #return zapi.host.get(filter={host:['webdev-01']}
+def trigger_update(host,
+                   description,
+                   expression,
+                   dependencies=None,
+                   **kwargs):
+    log.debug('JP_ZABBIX : trigger_update : START')
+    zapi = _get_zapi()
+    if not zapi:
+        return None
+    hostget = host_get(host)
+    result = None
+    if len(hostget) > 0:
+        try:
+            triggerid = trigger_get(host, description)[0]['triggerid']
+            if not dependencies:
+                result = zapi.trigger.update(triggerid=triggerid,
+                                             expression=expression,
+                                             **kwargs)
+            else:
+                dep = []
+                for d in dependencies:
+                    dep.append(
+                        {'triggerid': trigger_get(host,
+                                                  d)[0]['triggerid']}
+                    )
+                result = zapi.trigger.update(triggerid=triggerid,
+                                             expression=expression,
+                                             dependencies=dep,
+                                             **kwargs)
+        except Exception as e:
+            log.error(str(e))
+            pass
+    log.debug('JP_ZABBIX : trigger_update : END')
+    return result
 
-    return ''
+def trigger_get(host,
+                description=None,
+                **kwargs):
+    log.debug('JP_ZABBIX : trigger_get : START')
+    zapi = _get_zapi()
+    if not zapi:
+        return None
+    result = []
+    try:
+        hostid = host_get(host)[0]['hostid']
+        result = zapi.trigger.get(hostids=hostid,
+                                  search={"description":description})
+        log.debug(result)
+    except Exception as e:
+        log.error(str(e))
+        pass
+    log.debug('JP_ZABBIX : trigger_get : END')
+    return result

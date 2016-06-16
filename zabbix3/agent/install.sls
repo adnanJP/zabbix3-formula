@@ -5,3 +5,4 @@ zabbix3-install-agent:
 zabbix3-install-sender:
   pkg.installed:
     - name: zabbix-sender
+
