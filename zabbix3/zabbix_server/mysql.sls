@@ -43,6 +43,7 @@ zabbix3_mysql_filedb:
   file.managed:
     - name: /tmp/zabbix.sql.gz
     - source: {{ salt['pillar.get']('zabbix3:zabbix_server:mysql:database_path', 'salt://zabbix3/files/create.sql.gz') }}
+    - replace: True
     - onchanges:
       - mysql_database: zabbix3_database_present
 
@@ -51,7 +52,7 @@ zabbix3_create_database:
     - name: |
         zcat /tmp/zabbix.sql.gz | mysql -u{{ zabbix3.zabbix_server.mysql.user }} {% if zabbix3.zabbix_server.mysql.pass is defined %}-p{{ zabbix3.zabbix_server.mysql.pass }}{% endif %} zabbix
         rm /tmp/zabbix.sql.gz
-    - require:
+    - onchanges:
       - file: zabbix3_mysql_filedb
 
 zabbix3_mysql_conf:
