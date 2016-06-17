@@ -16,7 +16,7 @@ zabbix3_mysql_user_{{ srv }}:
     - name: {{ config.user }}
     - host: {{ config.host }}
     - password: {{ config.password }}
-    - connection_user: {{ zabbix3.zabbix_server.mysql.user }}
+alt   - connection_user: {{ zabbix3.zabbix_server.mysql.user }}
 {% if zabbix3.zabbix_server.mysql.pass is defined %}
     - connection_pass: {{ zabbix3.zabbix_server.mysql.pass }}
 {% endif %}
@@ -51,7 +51,7 @@ zabbix3_create_database:
     - name: |
         zcat /tmp/zabbix.sql.gz | mysql -u{{ zabbix3.zabbix_server.mysql.user }} {% if zabbix3.zabbix_server.mysql.pass is defined %}-p{{ zabbix3.zabbix_server.mysql.pass }}{% endif %} zabbix
         rm /tmp/zabbix.sql.gz
-    - onchanges:
+    - require:
       - file: zabbix3_mysql_filedb
 
 zabbix3_mysql_conf:
