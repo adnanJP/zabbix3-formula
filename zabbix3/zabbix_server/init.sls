@@ -1,5 +1,4 @@
 include:
-  - zabbix3.repo
   - {{ slspath }}.install
   - {{ slspath }}.mysql
   - {{ slspath }}.config
