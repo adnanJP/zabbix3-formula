@@ -1,21 +1,21 @@
-{% set minion_ips = salt.saltutil.runner('mine.get', tgt='*', fun='network.ip_addrs',  tgt_type='glob') %}
+{% set minion_ips = salt['mine.get'](tgt='*', fun='network.ip_addrs',  tgt_type='glob') %}
 
-{% set linux_ips = salt.saltutil.runner('mine.get', tgt='kernel:Linux', fun='network.ip_addrs',  tgt_type='grain') %}
+{% set linux_ips = salt['mine.get'](tgt='kernel:Linux', fun='network.ip_addrs',  tgt_type='grain') %}
 
-{% set windows_ips = salt.saltutil.runner('mine.get', tgt='kernel:Windows', fun='network.ip_addrs',  tgt_type='grain') %}
+{% set windows_ips = salt['mine.get'](tgt='kernel:Windows', fun='network.ip_addrs',  tgt_type='grain') %}
 
-{% set webserver_url_ips = salt.saltutil.runner('mine.get',
+{% set webserver_url_ips = salt['mine.get'](
 tgt='roles:webserver',
 fun='get_web_url',
 tgt_type='grain') %}
 
-{% set webserver_ips = salt.saltutil.runner('mine.get',
+{% set webserver_ips = salt['mine.get'](
 tgt='roles:webserver',
 fun='network.ip_addrs',
 tgt_type='grain') %}
 
-{% set web_ips = salt.saltutil.runner('mine.get',tgt='roles:zabbix_web', fun='network.ip_addrs',  tgt_type='grain') %}
-{% set server_ips = salt.saltutil.runner('mine.get',tgt='roles:zabbix_server', fun='network.ip_addrs',  tgt_type='grain') %}
+{% set web_ips = salt['mine.get'](tgt='roles:zabbix_web', fun='network.ip_addrs',  tgt_type='grain') %}
+{% set server_ips = salt['mine.get'](tgt='roles:zabbix_server', fun='network.ip_addrs',  tgt_type='grain') %}
 
 ###########################
 ## update admin password ##
@@ -44,7 +44,7 @@ zabbix3_config_user_update_{{ admin.alias }}:
 ##########################
 ## add kernel=Liux host ##
 ##########################
-{% set kernel_ips = salt.saltutil.runner('mine.get', tgt='kernel:Linux', fun='network.ip_addrs',  tgt_type='grain') %}
+{% set kernel_ips = salt['mine.get'](tgt='kernel:Linux', fun='network.ip_addrs',  tgt_type='grain') %}
 
 {% for host in kernel_ips %}
 
@@ -201,7 +201,7 @@ zabbix3_config_action_enable:
 {% set environments = ['dev', 'test', 'prod'] %}
 {% for env in  environments %}
 
-{% set dataware_ips = salt.saltutil.runner('mine.get',
+{% set dataware_ips = salt['mine.get'](
 tgt='G@environment:'+env+' and G@roles:dataware',
 fun='network.ip_addrs',
 tgt_type='compound') %}
