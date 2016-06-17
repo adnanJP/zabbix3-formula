@@ -16,7 +16,7 @@ zabbix3_mysql_user_{{ srv }}:
     - name: {{ config.user }}
     - host: {{ config.host }}
     - password: {{ config.password }}
-alt   - connection_user: {{ zabbix3.zabbix_server.mysql.user }}
+    - connection_user: {{ zabbix3.zabbix_server.mysql.user }}
 {% if zabbix3.zabbix_server.mysql.pass is defined %}
     - connection_pass: {{ zabbix3.zabbix_server.mysql.pass }}
 {% endif %}
